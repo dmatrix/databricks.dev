@@ -1,1 +1,85 @@
 # databricks.dev
+
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Databricks](https://img.shields.io/badge/Databricks-Connect-FF3621?logo=databricks)](https://docs.databricks.com/dev-tools/databricks-connect.html)
+[![PySpark](https://img.shields.io/badge/PySpark-3.5+-E25A1C?logo=apachespark)](https://spark.apache.org/docs/latest/api/python/)
+[![uv](https://img.shields.io/badge/uv-package%20manager-DE5FE9)](https://docs.astral.sh/uv/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
+
+A collection of AI-assisted development tools and examples for working with Databricks.
+
+## Overview
+
+This repository contains practical examples and tools for developing with Databricks using modern AI coding assistants like Cursor. The focus is on demonstrating best practices for local development with Databricks Connect and PySpark.
+
+## Repository Structure
+
+```
+databricks.dev/
+├── ai-tools/
+│   └── cursor/
+│       └── pyspark/
+│           └── dbconnect-example-app/    # Databricks Connect example application
+├── LICENSE
+└── README.md
+```
+
+## Projects
+
+### Databricks Connect Example App
+
+Located in `ai-tools/cursor/pyspark/dbconnect-example-app/`
+
+A minimal PySpark application demonstrating how to:
+- Connect to Databricks using Databricks Connect
+- Use serverless compute for data processing
+- Query sample data (NYC taxi trips)
+- Work with DataFrames in PySpark
+
+**Key Features:**
+- Uses `uv` for fast dependency management
+- Configured for the DEFAULT authentication profile
+- Includes suggested query prompts for data exploration
+- Clean, minimal setup for quick starts
+
+**Quick Start:**
+```bash
+cd ai-tools/cursor/pyspark/dbconnect-example-app
+
+# Authenticate with Databricks
+databricks auth login --profile DEFAULT --host https://your-workspace.databricks.com
+
+# Install dependencies and run
+uv sync
+uv run main.py
+```
+
+## Prerequisites
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) package manager
+- [Databricks CLI](https://docs.databricks.com/dev-tools/cli/index.html)
+- Access to a Databricks workspace
+
+## Authentication
+
+The examples use Databricks CLI authentication profiles. Set up your profile:
+
+```bash
+databricks auth login --profile DEFAULT --host https://your-workspace.databricks.com
+```
+
+## Resources
+
+- **Cursor with Databricks: AI Enhanced Development**: [Comprehensive guide by Dustin Vannoy](https://dustinvannoy.com/2025/09/29/cursor-with-databricks-ai-enhanced-development/) on leveraging Cursor IDE with Databricks Connect, including setup, Cursor rules, and MCP integration
+- **Vibe Coding Prompts**: Check out `vibe_coding_nyc_taxi_prompts.md` for interesting query ideas
+- **Databricks Connect Docs**: https://docs.databricks.com/dev-tools/databricks-connect.html
+- **PySpark Documentation**: https://spark.apache.org/docs/latest/api/python/
+
+## Contributing
+
+This repository is for educational and demonstration purposes. Feel free to fork and adapt the examples for your own use cases.
+
+## License
+
+See [LICENSE](LICENSE) for details.
