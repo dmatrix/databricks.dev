@@ -1,0 +1,158 @@
+---
+globs: **/test_*.py,**/tests/**/*.py
+alwaysApply: false
+---
+# Testing Rules for Databricks Projects
+
+## Test Function Limits
+
+**CRITICAL**: When creating test functions, create **MAXIMUM 2 tests per function being tested**.
+
+Avoid creating Test Classes; stick to test functions
+
+### Test Pattern
+
+For each function being tested, create:
+
+1. **One happy path test** with multiple assertions covering normal cases
+2. **One edge case/failure test** with multiple assertions covering error conditions
+
+### Multiple Assertions Strategy
+
+✅ **DO**: Combine related checks in a single test function
+```python
+def test_get_taxis_returns_valid_dataframe():
+    """Test that get_taxis returns a DataFrame with correct structure and data."""
+    spark = get_spark()
+    df = get_taxis(spark)
+    
+    # Multiple assertions in one test
+    assert df is not None, "DataFrame should not be None"
+    assert isinstance(df, DataFrame), "Should return DataFrame type"
+    assert df.count() > 0, "DataFrame should contain records"
+    assert "trip_distance" in df.columns, "Should have trip_distance column"
+    assert "fare_amount" in df.columns, "Should have fare_amount column"
+    assert df.filter(df.trip_distance < 0).count() == 0, "No negative distances"
+```
+
+❌ **DON'T**: Create separate test for each assertion
+```python
+# BAD - Too many tests for one function
+def test_get_taxis_returns_dataframe():
+    df = get_taxis(get_spark())
+    assert df is not None
+
+def test_get_taxis_has_columns():
+    df = get_taxis(get_spark())
+    assert "trip_distance" in df.columns
+
+def test_get_taxis_has_records():
+    df = get_taxis(get_spark())
+    assert df.count() > 0
+
+# This creates 3+ tests for one function - WRONG!
+```
+
+### Test Organization
+
+**For a single function under test:**
+
+```python
+def test_function_name_happy_path():
+    """Test normal/expected behavior with multiple validations."""
+    # Setup
+    result = function_under_test(valid_input)
+    
+    # Multiple assertions for happy path
+    assert result is not None
+    assert result.expected_property == expected_value
+    assert len(result.collection) > 0
+    assert result.validates_correctly()
+```
+
+```python
+def test_function_name_edge_cases():
+    """Test error conditions and edge cases with multiple validations."""
+    # Test multiple edge cases in one function
+    
+    # Edge case 1: Empty input
+    with pytest.raises(ValueError):
+        function_under_test(None)
+    
+    # Edge case 2: Invalid input
+    with pytest.raises(ValueError):
+        function_under_test(invalid_value)
+    
+    # Edge case 3: Boundary condition
+    result = function_under_test(boundary_value)
+    assert result.handled_correctly
+```
+
+## Real Example from Project
+
+```python
+def test_get_taxis_returns_dataframe():
+    """Test that get_taxis returns a DataFrame with expected structure."""
+    from dbconnect_nyc_example.config import get_spark
+    from dbconnect_nyc_example.data import get_taxis
+    
+    spark = get_spark()
+    df = get_taxis(spark)
+    
+    # Verify DataFrame is not None
+    assert df is not None
+    
+    # Verify expected columns exist (multiple assertions)
+    expected_columns = [
+        "tpep_pickup_datetime",
+        "tpep_dropoff_datetime",
+        "trip_distance",
+        "fare_amount",
+        "pickup_zip",
+        "dropoff_zip"
+    ]
+    
+    for col in expected_columns:
+        assert col in df.columns, f"Expected column '{col}' not found"
+    
+    # Verify DataFrame has data
+    assert df.count() > 0, "DataFrame should contain records"
+
+
+def test_get_taxis_has_mostly_positive_fare_amounts():
+    """Test that most fare amounts are positive (edge cases)."""
+    from dbconnect_nyc_example.config import get_spark
+    from dbconnect_nyc_example.data import get_taxis
+    
+    spark = get_spark()
+    df = get_taxis(spark)
+    
+    # Multiple validations in one test
+    total_count = df.count()
+    negative_fares = df.filter(df.fare_amount < 0).count()
+    positive_ratio = (total_count - negative_fares) / total_count
+    
+    # At least 99% of fares should be non-negative
+    assert positive_ratio >= 0.99, f"Expected at least 99% positive fares"
+    assert negative_fares < 100, "Too many negative fares"
+```
+
+## Why This Approach?
+
+### Benefits:
+✅ **Efficiency**: Fewer test functions means faster test execution  
+✅ **Clarity**: Related assertions grouped together are easier to understand  
+✅ **Maintenance**: Less code duplication, easier to update  
+✅ **Speed**: Spark session initialization happens only once per test  
+
+### When to Break This Rule:
+Only create more than 2 tests if:
+- The function has **completely different execution paths** (e.g., different algorithms based on input type)
+- The function is **critical** and requires extensive integration testing
+- **Explicitly requested** by the developer
+
+## Summary
+
+🎯 **Key Rule**: **2 tests maximum per function**  
+📝 **Strategy**: **Multiple assertions per test**  
+✅ **Result**: **Comprehensive coverage with minimal test count**
