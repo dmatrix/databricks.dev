@@ -19,16 +19,17 @@ databricks.dev/
 ├── ai-tools/
 │   └── cursor/
 │       └── pyspark/
-│           └── dbconnect-example-app/    # Databricks Connect example application
+│           ├── .cursor/                  # Cursor IDE rules
+│           └── dbconnect-nyc-example/    # NYC Taxi example with Databricks Connect
 ├── LICENSE
 └── README.md
 ```
 
 ## Projects
 
-### Databricks Connect Example App
+### Databricks Connect NYC Taxi Example
 
-Located in `ai-tools/cursor/pyspark/dbconnect-example-app/`
+Located in `ai-tools/cursor/pyspark/dbconnect-nyc-example/`
 
 A minimal PySpark application demonstrating how to:
 - Connect to Databricks using Databricks Connect
@@ -39,19 +40,22 @@ A minimal PySpark application demonstrating how to:
 **Key Features:**
 - Uses `uv` for fast dependency management
 - Configured for the DEFAULT authentication profile
-- Includes suggested query prompts for data exploration
+- Includes 12 query examples for data exploration
+- Follows strict project structure rules for AI-assisted development
+- Includes Cursor IDE rules (python-dev.mdc, project-structure-rules.mdc)
 - Clean, minimal setup for quick starts
+- Comprehensive test suite with pytest
 
 **Quick Start:**
 ```bash
-cd ai-tools/cursor/pyspark/dbconnect-example-app
+cd ai-tools/cursor/pyspark/dbconnect-nyc-example
 
 # Authenticate with Databricks
 databricks auth login --profile DEFAULT --host https://your-workspace.databricks.com
 
 # Install dependencies and run
 uv sync
-uv run main.py
+uv run src/main.py
 ```
 
 ## Prerequisites
@@ -71,8 +75,14 @@ databricks auth login --profile DEFAULT --host https://your-workspace.databricks
 
 ## Resources
 
+### AI-Assisted Development
 - **Cursor with Databricks: AI Enhanced Development**: [Comprehensive guide by Dustin Vannoy](https://dustinvannoy.com/2025/09/29/cursor-with-databricks-ai-enhanced-development/) on leveraging Cursor IDE with Databricks Connect, including setup, Cursor rules, and MCP integration
-- **Vibe Coding Prompts**: Check out `vibe_coding_nyc_taxi_prompts.md` for interesting query ideas
+- **Cursor Rules**: Check out `ai-tools/cursor/pyspark/.cursor/rules/` for Python development and project structure rules
+
+### Query Examples & Documentation
+- **Vibe Coding Prompts**: See `docs/vibe_coding_nyc_taxi_prompts.md` for 12 interesting query patterns
+
+### Official Documentation
 - **Databricks Connect Docs**: https://docs.databricks.com/dev-tools/databricks-connect.html
 - **PySpark Documentation**: https://spark.apache.org/docs/latest/api/python/
 

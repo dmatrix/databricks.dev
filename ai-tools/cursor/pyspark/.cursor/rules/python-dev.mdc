@@ -1,0 +1,180 @@
+---
+globs: **/*.py,**/*.ipynb
+alwaysApply: false
+---
+# Python Development Rules for Databricks Projects
+
+## General Python Guidelines
+
+- Use the DRY principle, composition over inheritance, pure functions when possible
+- 
+- Use Python 3.11+ features and syntax
+- Follow PEP 8 style guidelines for code formatting
+- Use type hints for all function signatures and class attributes
+- Write descriptive docstrings for all public functions, classes, and modules
+- Keep functions focused and under 50 lines when possible
+- Use descriptive variable names that convey intent
+
+## Testing (Critical)
+- **pytest only** (no unittest) - all tests must be in `/tests/` directory with `__init__.py` file
+- TDD approach: write/update test for all modified code
+- All tests must pass before task completion
+
+## Dependency Management
+
+- ALWAYS use `uv` for package management (never pip, poetry, or conda)
+- Add dependencies to `pyproject.toml` under `[project.dependencies]`
+- Run `uv sync` after adding new dependencies
+- Generate `requirements.txt` with `uv pip compile pyproject.toml -o requirements.txt`
+- Pin dependency versions for reproducibility
+
+## Testing Framework
+
+- ALWAYS use `pytest` for testing (NEVER unittest)
+- Place all tests in a `tests/` directory at the project root
+- Name test files with `test_` prefix (e.g., `test_main.py`)
+- Name test functions descriptively: `test_<what_is_being_tested>_<expected_outcome>`
+- Use pytest fixtures for reusable test data and setup
+- Create one happy path test with multiple assertions per function
+- Create one failure/edge case test per function
+- Use `pytest.raises()` for exception testing
+- Keep tests independent and idempotent
+
+Example:
+```python
+def test_get_taxis_returns_dataframe_with_expected_columns():
+    spark = get_spark()
+    df = get_taxis(spark)
+    
+    assert df is not None
+    assert "tpep_pickup_datetime" in df.columns
+    assert df.count() > 0
+```
+
+## Project Structure
+
+**Note:** Detailed project structure rules are defined in `project-structure-rules.mdc`.
+
+**Quick Reference:**
+- Source code → `/src/project_name/` (package) and `/src/` (scripts, notebooks)
+- Tests → `/tests/` (mirror src structure)
+- Scripts → `/scripts/` (setup, dev scripts only)
+- Data → `/data/` (internal data only, no scripts)
+- Docs → `/docs/`
+
+## Code Quality
+
+- Use `ruff` for linting and formatting
+- Run linter before committing code
+- Fix all linter errors and warnings
+- Avoid code duplication - extract common logic into functions
+- Use list comprehensions for simple iterations
+- Use context managers (`with` statements) for resource management
+
+## Error Handling
+ - Specfic exception types, validate inputs early
+ - f-strings, comprehensions, context-managers
+- Use specific exception types (never bare `except:`)
+- Provide informative error messages
+- Log errors with context information
+- Handle expected errors gracefully
+- Let unexpected errors bubble up with clear stack traces
+
+Example:
+```python
+try:
+    df = spark.read.table("samples.nyctaxi.trips")
+except Exception as e:
+    raise ValueError(f"Failed to read table: {e}") from e
+```
+
+## Documentation
+
+- Write docstrings in Google style format
+- Include type hints in docstrings when helpful
+- Document all parameters and return values
+- Provide usage examples in docstrings for complex functions
+- Keep README.md up to date with setup and usage instructions
+
+Example:
+```python
+def get_taxis(spark: SparkSession) -> DataFrame:
+    """Retrieve NYC taxi trip data from Databricks sample tables.
+    
+    Args:
+        spark: An active SparkSession instance
+        
+    Returns:
+        DataFrame containing NYC taxi trip records with columns:
+        - tpep_pickup_datetime
+        - tpep_dropoff_datetime
+        - trip_distance
+        - fare_amount
+        - pickup_zip
+        - dropoff_zip
+        
+    Raises:
+        ValueError: If the table cannot be accessed
+        
+    Example:
+        >>> spark = get_spark()
+        >>> df = get_taxis(spark)
+        >>> df.show(5)
+    """
+    return spark.read.table("samples.nyctaxi.trips")
+```
+
+## Databricks-Specific Guidelines
+
+- Use `DatabricksSession` instead of standard `SparkSession`
+- Configure with DEFAULT profile for consistency with AI tools
+- Use `.serverless(False)` or `.serverless(True)` explicitly
+- Handle connection errors gracefully with informative messages
+- Use DataFrame API over SQL when possible for better type safety
+- Import PySpark functions explicitly: `from pyspark.sql.functions import col, when`
+
+## Imports
+
+- Group imports in this order:
+  1. Standard library imports
+  2. Third-party library imports
+  3. Local application imports
+- Use absolute imports over relative imports
+- Sort imports alphabetically within each group
+- Avoid wildcard imports (`from module import *`)
+
+Example:
+```python
+# Standard library
+from typing import Optional
+
+# Third-party
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import col, when, avg
+
+# Local
+from my_project.config import settings
+```
+
+## Version Control
+
+- Write clear, descriptive commit messages
+- Commit logical units of work
+- Don't commit generated files (.pyc, __pycache__, .venv)
+- Keep .gitignore updated
+- Review diffs before committing
+
+## Performance
+
+- Use DataFrame operations over collect() when possible
+- Avoid unnecessary data shuffling
+- Cache DataFrames that are reused multiple times
+- Use appropriate partition sizes
+- Profile code to identify bottlenecks before optimizing
+
+## Security
+
+- Never hardcode credentials or secrets
+- Use environment variables or secret management systems
+- Don't commit sensitive information to version control
+- Use authentication profiles (DEFAULT) for Databricks access
