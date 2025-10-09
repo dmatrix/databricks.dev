@@ -36,15 +36,22 @@ A minimal PySpark application demonstrating how to:
 - Use serverless compute for data processing
 - Query sample data (NYC taxi trips)
 - Work with DataFrames in PySpark
+- Perform aggregations and time-series analysis
+
+**Implemented Functions:**
+- `get_taxis()` - Raw NYC taxi trip data
+- `get_taxis_with_fare_per_mile()` - Fare per mile calculations
+- `get_busiest_pickup_locations()` - Top pickup locations by demand
+- `get_peak_hours()` - Hourly analysis with trip statistics
 
 **Key Features:**
 - Uses `uv` for fast dependency management
 - Configured for the DEFAULT authentication profile
-- Includes 12 query examples for data exploration
+- 12 query patterns available (3 implemented, 9 ready for development)
 - Follows strict project structure rules for AI-assisted development
-- Includes Cursor IDE rules (python-dev.mdc, project-structure-rules.mdc)
+- Includes Cursor IDE rules (python-dev.mdc, project-structure-rules.mdc, testing-rules.mdc)
 - Clean, minimal setup for quick starts
-- Comprehensive test suite with pytest
+- Comprehensive test suite with pytest (8 tests, 100% passing)
 
 **Quick Start:**
 ```bash
@@ -55,7 +62,22 @@ databricks auth login --profile DEFAULT --host https://your-workspace.databricks
 
 # Install dependencies and run
 uv sync
-uv run src/main.py
+uv run python src/main.py
+
+# Run tests
+uv run pytest tests/ -v
+```
+
+**Example Output:**
+```
+NYC Taxi Peak Hours Analysis:
++----+----------+--------+------------+
+|hour|trip_count|avg_fare|avg_distance|
++----+----------+--------+------------+
+|18  |1455      |11.77   |2.45        | ← Peak demand at 6 PM
+|7   |801       |11.55   |2.75        | ← Morning rush
+|4   |250       |14.73   |4.24        | ← Highest fares (early morning)
+...
 ```
 
 ## Prerequisites
@@ -80,7 +102,9 @@ databricks auth login --profile DEFAULT --host https://your-workspace.databricks
 - **Cursor Rules**: Check out `ai-tools/cursor/pyspark/.cursor/rules/` for Python development and project structure rules
 
 ### Query Examples & Documentation
-- **Vibe Coding Prompts**: See `docs/vibe_coding_nyc_taxi_prompts.md` for 12 interesting query patterns
+- **Vibe Coding Prompts**: See `ai-tools/cursor/pyspark/dbconnect-nyc-example/docs/vibe_coding_nyc_taxi_prompts.md` for 12 interesting query patterns
+  - 3 implemented and tested (Average Fare Per Mile, Busiest Pickup Locations, Peak Hours Analysis)
+  - 9 ready for AI-assisted development
 
 ### Official Documentation
 - **Databricks Connect Docs**: https://docs.databricks.com/dev-tools/databricks-connect.html

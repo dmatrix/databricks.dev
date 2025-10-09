@@ -1,348 +1,219 @@
-# Suggested Queries for NYC Taxi Dataset
+# Vibe Coding Prompts for NYC Taxi Dataset
 
-This document contains interesting queries you can use to garner insights from the `samples.nyctaxi.trips` dataset.
+This document contains prompts for generating interesting queries to analyze the `samples.nyctaxi.trips` dataset. Each prompt is designed to be used with AI code generation tools to create PySpark DataFrame transformations.
+
+**Usage:** Copy a prompt and use it to generate code that will be added to `src/dbconnect_nyc_example/data.py` and called from `src/main.py`.
 
 ---
 
 ## 1. Average Fare Per Mile
 
-**Prompt:** "Update the df returned to include average fare per mile (trip_distance)"
+**Prompt:** "Create a function `get_taxis_with_fare_per_mile` that returns NYC taxi trips with average fare per mile calculated. Handle zero-distance trips by setting their fare per mile to None. Use try_divide funciton for division, compute values rounding up to 2 decimal places. Order results by fare per mile descending."
 
-```python
-def get_taxis_with_fare_per_mile(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import col, when
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("average_fare_per_mile",
-      when(col("trip_distance") > 0, col("fare_amount") / col("trip_distance"))
-      .otherwise(None)
-    )
-    .orderBy(col("average_fare_per_mile").desc())
-  )
-```
+**Expected Output:**
+- New column: `average_fare_per_mile` (fare_amount / trip_distance)
+- Zero-distance trips should have None for fare per mile
+- Results ordered by fare per mile (highest first)
+- All original columns preserved
 
-**Insight:** Shows the cost efficiency of trips - short trips typically have higher per-mile rates due to base fares and minimum charges.
+**Insight:** Shows cost efficiency of trips - short trips typically have higher per-mile rates due to base fares and minimum charges.
 
 ---
 
 ## 2. Busiest Pickup Locations
 
-**Prompt:** "Find which zip codes have the most pickups and show the top 10"
+**Prompt:** "Create a function `get_busiest_pickup_locations` that finds which zip codes have the most pickups."
 
-```python
-def get_busiest_pickup_locations(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import count, col
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .groupBy("pickup_zip")
-    .agg(count("*").alias("trip_count"))
-    .orderBy(col("trip_count").desc())
-  )
-```
+**Expected Output:**
+- Group by: `pickup_zip`
+- Aggregate: count of trips as `trip_count`
+- Order by: trip count descending (busiest first)
 
-**Insight:** Identifies the most popular pickup locations in NYC.
+**Insight:** Identifies the most popular pickup locations in NYC - useful for understanding demand patterns.
 
 ---
 
 ## 3. Peak Hours Analysis
 
-**Prompt:** "Show me the busiest hours of the day with average fare and distance"
+**Prompt:** "Create a function `get_peak_hours` that shows the busiest hours of the day with average fare and distance."
 
-```python
-def get_peak_hours(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import hour, count, avg, col
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("hour", hour("tpep_pickup_datetime"))
-    .groupBy("hour")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare"),
-      avg("trip_distance").alias("avg_distance")
-    )
-    .orderBy("hour")
-  )
-```
+**Expected Output:**
+- Extract hour from `tpep_pickup_datetime`
+- Group by: hour of day (0-23)
+- Aggregates: trip count, average fare, average distance
+- Order by: hour (chronological)
 
-**Insight:** Reveals patterns in taxi usage throughout the day, useful for understanding demand.
+**Insight:** Reveals patterns in taxi usage throughout the day - useful for understanding demand cycles and optimal driver scheduling.
 
 ---
 
 ## 4. Most Popular Routes
 
-**Prompt:** "What are the most common pickup-dropoff route combinations?"
+**Prompt:** "Create a function `get_popular_routes` that finds the most common pickup-dropoff route combinations."
 
-```python
-def get_popular_routes(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import count, avg, col
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .groupBy("pickup_zip", "dropoff_zip")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare"),
-      avg("trip_distance").alias("avg_distance")
-    )
-    .orderBy(col("trip_count").desc())
-  )
-```
+**Expected Output:**
+- Group by: `pickup_zip` and `dropoff_zip`
+- Aggregates: trip count, average fare, average distance for each route
+- Order by: trip count descending (most popular first)
 
-**Insight:** Shows the most traveled routes, which could inform driver positioning strategies.
+**Insight:** Shows the most traveled routes - could inform driver positioning strategies and demand forecasting.
 
 ---
 
 ## 5. Trip Distance Distribution
 
-**Prompt:** "Analyze trips by distance buckets (0-1, 1-3, 3-5, 5-10, 10+ miles)"
+**Prompt:** "Create a function `get_trip_distance_buckets` that analyzes trips by distance buckets: 0-1, 1-3, 3-5, 5-10, and 10+ miles."
 
-```python
-def get_trip_distance_buckets(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import when, col, count, avg
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("distance_bucket", 
-      when(col("trip_distance") < 1, "0-1 miles")
-      .when(col("trip_distance") < 3, "1-3 miles")
-      .when(col("trip_distance") < 5, "3-5 miles")
-      .when(col("trip_distance") < 10, "5-10 miles")
-      .otherwise("10+ miles")
-    )
-    .groupBy("distance_bucket")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare")
-    )
-    .orderBy("trip_count")
-  )
-```
+**Expected Output:**
+- New column: `distance_bucket` with ranges (0-1 miles, 1-3 miles, 3-5 miles, 5-10 miles, 10+ miles)
+- Group by: distance bucket
+- Aggregates: trip count, average fare per bucket
+- Order by: trip count
 
-**Insight:** Understand the distribution of trip lengths and their relationship to fares.
+**Insight:** Understand the distribution of trip lengths and their relationship to fares - most trips are short urban rides.
 
 ---
 
 ## 6. Day of Week Patterns
 
-**Prompt:** "How do trips vary by day of the week?"
+**Prompt:** "Create a function `get_day_of_week_patterns` that shows how trips vary by day of the week."
 
-```python
-def get_day_of_week_patterns(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import dayofweek, count, avg, col
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("day_of_week", dayofweek("tpep_pickup_datetime"))
-    .groupBy("day_of_week")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare"),
-      avg("trip_distance").alias("avg_distance")
-    )
-    .orderBy("day_of_week")
-  )
-```
+**Expected Output:**
+- Extract day of week from `tpep_pickup_datetime` (1=Sunday, 7=Saturday)
+- Group by: day of week
+- Aggregates: trip count, average fare, average distance
+- Order by: day of week (chronological)
 
-**Insight:** Identify weekday vs weekend patterns in taxi usage (1=Sunday, 7=Saturday).
+**Insight:** Identify weekday vs weekend patterns in taxi usage - typically more commuter traffic on weekdays, leisure on weekends.
 
 ---
 
 ## 7. Trip Duration Analysis
 
-**Prompt:** "Calculate trip durations and group them into time buckets"
+**Prompt:** "Create a function `get_trip_duration_analysis` that calculates trip durations in minutes and groups them into time buckets: 0-10, 10-20, 20-30, and 30+ minutes."
 
-```python
-def get_trip_duration_analysis(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import unix_timestamp, col, avg, count, when
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("duration_minutes", 
-      (unix_timestamp("tpep_dropoff_datetime") - 
-       unix_timestamp("tpep_pickup_datetime")) / 60
-    )
-    .filter(col("duration_minutes") > 0)
-    .withColumn("duration_bucket",
-      when(col("duration_minutes") < 10, "0-10 min")
-      .when(col("duration_minutes") < 20, "10-20 min")
-      .when(col("duration_minutes") < 30, "20-30 min")
-      .otherwise("30+ min")
-    )
-    .groupBy("duration_bucket")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare"),
-      avg("trip_distance").alias("avg_distance")
-    )
-  )
-```
+**Expected Output:**
+- Calculate duration_minutes from pickup to dropoff timestamps
+- Filter out negative or zero durations
+- Create duration buckets: 0-10 min, 10-20 min, 20-30 min, 30+ min
+- Group by: duration bucket
+- Aggregates: trip count, average fare, average distance
 
-**Insight:** Understand trip duration patterns and how they correlate with distance and fare.
+**Insight:** Understand trip duration patterns and how they correlate with distance and fare - helps identify traffic conditions.
 
 ---
 
 ## 8. Expensive vs Cheap Trips
 
-**Prompt:** "Compare characteristics of high-fare vs low-fare trips using quartiles"
+**Prompt:** "Create a function `get_fare_comparison` that compares characteristics of high-fare vs low-fare trips using quartiles to categorize them."
 
-```python
-def get_fare_comparison(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import col, percentile_approx, avg, when, count
-  
-  df = spark.read.table("samples.nyctaxi.trips")
-  
-  # Get percentiles
-  percentiles = df.select(
-    percentile_approx("fare_amount", 0.25).alias("q1"),
-    percentile_approx("fare_amount", 0.75).alias("q3")
-  ).collect()[0]
-  
-  return (df.withColumn("fare_category",
-      when(col("fare_amount") < percentiles["q1"], "Low")
-      .when(col("fare_amount") > percentiles["q3"], "High")
-      .otherwise("Medium")
-    )
-    .groupBy("fare_category")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("trip_distance").alias("avg_distance"),
-      avg("fare_amount").alias("avg_fare")
-    )
-  )
-```
+**Expected Output:**
+- Calculate 25th percentile (Q1) and 75th percentile (Q3) of fare amounts
+- Categorize trips: Low (below Q1), Medium (Q1-Q3), High (above Q3)
+- Group by: fare category
+- Aggregates: trip count, average distance, average fare
 
-**Insight:** Reveals what distinguishes expensive trips from cheap ones.
+**Insight:** Reveals what distinguishes expensive trips from cheap ones - typically longer distances or premium time periods.
 
 ---
 
 ## 9. Speed Analysis
 
-**Prompt:** "Calculate average speed (mph) for trips and identify patterns"
+**Prompt:** "Create a function `get_speed_analysis` that calculates average speed in mph for trips and identifies traffic patterns."
 
-```python
-def get_speed_analysis(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import unix_timestamp, col, avg, count, when
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("duration_hours", 
-      (unix_timestamp("tpep_dropoff_datetime") - 
-       unix_timestamp("tpep_pickup_datetime")) / 3600
-    )
-    .filter((col("duration_hours") > 0) & (col("trip_distance") > 0))
-    .withColumn("avg_speed_mph", col("trip_distance") / col("duration_hours"))
-    .filter(col("avg_speed_mph") < 100)  # Filter outliers
-    .withColumn("speed_bucket",
-      when(col("avg_speed_mph") < 10, "0-10 mph (Heavy Traffic)")
-      .when(col("avg_speed_mph") < 20, "10-20 mph (Moderate)")
-      .when(col("avg_speed_mph") < 30, "20-30 mph (Good Flow)")
-      .otherwise("30+ mph (Highway)")
-    )
-    .groupBy("speed_bucket")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare"),
-      avg("trip_distance").alias("avg_distance")
-    )
-  )
-```
+**Expected Output:**
+- Calculate duration in hours from timestamps
+- Calculate average speed: distance / duration_hours
+- Filter: positive durations and distances, speed < 100 mph (remove outliers)
+- Create speed buckets: 0-10 mph (Heavy Traffic), 10-20 mph (Moderate), 20-30 mph (Good Flow), 30+ mph (Highway)
+- Group by: speed bucket
+- Aggregates: trip count, average fare, average distance
 
-**Insight:** Understand traffic patterns through average travel speeds.
+**Insight:** Understand traffic patterns through average travel speeds - reveals congestion times and highway vs city driving.
 
 ---
 
 ## 10. Weekend vs Weekday Analysis
 
-**Prompt:** "Compare weekend vs weekday trip patterns"
+**Prompt:** "Create a function `get_weekend_vs_weekday` that compares weekend vs weekday trip patterns."
 
-```python
-def get_weekend_vs_weekday(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import dayofweek, when, col, count, avg
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("day_type",
-      when(dayofweek("tpep_pickup_datetime").isin([1, 7]), "Weekend")
-      .otherwise("Weekday")
-    )
-    .groupBy("day_type")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare"),
-      avg("trip_distance").alias("avg_distance")
-    )
-  )
-```
+**Expected Output:**
+- Extract day of week from pickup datetime
+- Create day_type: Weekend (Sunday=1, Saturday=7) or Weekday (all others)
+- Group by: day_type
+- Aggregates: trip count, average fare, average distance
 
-**Insight:** Reveals differences in taxi usage between weekdays and weekends.
+**Insight:** Reveals differences in taxi usage between weekdays and weekends - commuter vs leisure patterns.
 
 ---
 
 ## 11. Late Night vs Rush Hour
 
-**Prompt:** "Compare late night trips vs rush hour trips"
+**Prompt:** "Create a function `get_time_period_comparison` that compares trips across different time periods: morning rush, evening rush, late night, and off-peak."
 
-```python
-def get_time_period_comparison(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import hour, when, col, count, avg
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("hour", hour("tpep_pickup_datetime"))
-    .withColumn("time_period",
-      when((col("hour") >= 7) & (col("hour") <= 9), "Morning Rush")
-      .when((col("hour") >= 17) & (col("hour") <= 19), "Evening Rush")
-      .when((col("hour") >= 22) | (col("hour") <= 4), "Late Night")
-      .otherwise("Off-Peak")
-    )
-    .groupBy("time_period")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare"),
-      avg("trip_distance").alias("avg_distance")
-    )
-    .orderBy(col("trip_count").desc())
-  )
-```
+**Expected Output:**
+- Extract hour from pickup datetime
+- Create time_period categories:
+  - Morning Rush: 7-9 AM
+  - Evening Rush: 5-7 PM
+  - Late Night: 10 PM - 4 AM
+  - Off-Peak: all other times
+- Group by: time_period
+- Aggregates: trip count, average fare, average distance
+- Order by: trip count descending
 
-**Insight:** Shows how trip characteristics differ across different times of day.
+**Insight:** Shows how trip characteristics differ across different times of day - rush hour = shorter trips, late night = longer distances.
 
 ---
 
 ## 12. Hourly Revenue Potential
 
-**Prompt:** "Calculate potential hourly revenue by combining trip frequency and average fares"
+**Prompt:** "Create a function `get_hourly_revenue_potential` that calculates potential hourly revenue by combining trip frequency and average fares."
 
-```python
-def get_hourly_revenue_potential(spark: SparkSession) -> DataFrame:
-  from pyspark.sql.functions import hour, count, avg, col, round as spark_round
-  
-  return (spark.read.table("samples.nyctaxi.trips")
-    .withColumn("hour", hour("tpep_pickup_datetime"))
-    .groupBy("hour")
-    .agg(
-      count("*").alias("trip_count"),
-      avg("fare_amount").alias("avg_fare"),
-      spark_round(count("*") * avg("fare_amount"), 2).alias("total_revenue_potential")
-    )
-    .withColumn("avg_fare", spark_round(col("avg_fare"), 2))
-    .orderBy(col("total_revenue_potential").desc())
-  )
-```
+**Expected Output:**
+- Extract hour from pickup datetime
+- Group by: hour
+- Aggregates:
+  - trip_count: number of trips per hour
+  - avg_fare: average fare per hour
+  - total_revenue_potential: trip_count × avg_fare (rounded to 2 decimals)
+- Order by: total revenue potential descending
 
 **Insight:** Identifies the most profitable hours for drivers by combining trip volume with average fares - helps optimize driver schedules for maximum earnings.
 
 ---
 
-## How to Use These Queries
+## How to Use These Prompts
 
-1. Copy any function into your `main.py` file
-2. Update the `main()` function to call your chosen query function
-3. Run with `uv run main.py`
+### Step 1: Choose a Prompt
+Select any prompt from above that interests you.
 
-Example:
-```python
-def main():
-    get_peak_hours(get_spark()).show(24)  # Show all 24 hours
+### Step 2: Generate the Code
+Use the prompt with your AI assistant to generate:
+1. The function implementation in `src/dbconnect_nyc_example/data.py`
+2. Update `src/main.py` to call your new function
+3. Create pytest tests following the testing-rules (2 tests max per function)
+
+### Step 3: Run and Verify
+```bash
+# Run the implementation
+uv run python src/main.py
+
+# Run the tests
+uv run pytest tests/test_data.py -v
 ```
 
-## Tips for Exploration
+## Tips for Better Prompts
+
+- Start with "Create a function `function_name`..." for clarity
+- Specify the expected output structure (columns, aggregations, ordering)
+- Mention edge cases that need handling (null values, zeros, outliers)
+- Request proper docstrings following Google style format
+- Ask for type hints on function signatures
+
+## Display Tips
 
 - Use `.show(n)` to display more rows (default is 20)
 - Use `.show(n, truncate=False)` to see full values without truncation
-- Chain multiple operations for deeper analysis
-- Export results with `.toPandas()` for visualization
+- Use `.toPandas()` for visualization in notebooks
 - Use `.explain()` to see the query execution plan

@@ -17,7 +17,7 @@ alwaysApply: false
 
 ## Testing (Critical)
 - **pytest only** (no unittest) - all tests must be in `/tests/` directory with `__init__.py` file
-- TDD approach: write/update test for all modified code
+- Test Driven Development (TDD) approach: write/update test for all modified code
 - All tests must pass before task completion
 
 ## Dependency Management
