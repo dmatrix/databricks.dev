@@ -4,7 +4,28 @@ This document contains interesting queries you can use to garner insights from t
 
 ---
 
-## 1. Busiest Pickup Locations
+## 1. Average Fare Per Mile
+
+**Prompt:** "Update the df returned to include average fare per mile (trip_distance)"
+
+```python
+def get_taxis_with_fare_per_mile(spark: SparkSession) -> DataFrame:
+  from pyspark.sql.functions import col, when
+  
+  return (spark.read.table("samples.nyctaxi.trips")
+    .withColumn("average_fare_per_mile",
+      when(col("trip_distance") > 0, col("fare_amount") / col("trip_distance"))
+      .otherwise(None)
+    )
+    .orderBy(col("average_fare_per_mile").desc())
+  )
+```
+
+**Insight:** Shows the cost efficiency of trips - short trips typically have higher per-mile rates due to base fares and minimum charges.
+
+---
+
+## 2. Busiest Pickup Locations
 
 **Prompt:** "Find which zip codes have the most pickups and show the top 10"
 
@@ -23,7 +44,7 @@ def get_busiest_pickup_locations(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 2. Peak Hours Analysis
+## 3. Peak Hours Analysis
 
 **Prompt:** "Show me the busiest hours of the day with average fare and distance"
 
@@ -47,7 +68,7 @@ def get_peak_hours(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 3. Most Popular Routes
+## 4. Most Popular Routes
 
 **Prompt:** "What are the most common pickup-dropoff route combinations?"
 
@@ -70,7 +91,7 @@ def get_popular_routes(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 4. Trip Distance Distribution
+## 5. Trip Distance Distribution
 
 **Prompt:** "Analyze trips by distance buckets (0-1, 1-3, 3-5, 5-10, 10+ miles)"
 
@@ -99,7 +120,7 @@ def get_trip_distance_buckets(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 5. Day of Week Patterns
+## 6. Day of Week Patterns
 
 **Prompt:** "How do trips vary by day of the week?"
 
@@ -123,7 +144,7 @@ def get_day_of_week_patterns(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 6. Trip Duration Analysis
+## 7. Trip Duration Analysis
 
 **Prompt:** "Calculate trip durations and group them into time buckets"
 
@@ -156,7 +177,7 @@ def get_trip_duration_analysis(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 7. Expensive vs Cheap Trips
+## 8. Expensive vs Cheap Trips
 
 **Prompt:** "Compare characteristics of high-fare vs low-fare trips using quartiles"
 
@@ -190,7 +211,7 @@ def get_fare_comparison(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 8. Speed Analysis
+## 9. Speed Analysis
 
 **Prompt:** "Calculate average speed (mph) for trips and identify patterns"
 
@@ -225,7 +246,7 @@ def get_speed_analysis(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 9. Weekend vs Weekday Analysis
+## 10. Weekend vs Weekday Analysis
 
 **Prompt:** "Compare weekend vs weekday trip patterns"
 
@@ -251,7 +272,7 @@ def get_weekend_vs_weekday(spark: SparkSession) -> DataFrame:
 
 ---
 
-## 10. Late Night vs Rush Hour
+## 11. Late Night vs Rush Hour
 
 **Prompt:** "Compare late night trips vs rush hour trips"
 
@@ -278,6 +299,31 @@ def get_time_period_comparison(spark: SparkSession) -> DataFrame:
 ```
 
 **Insight:** Shows how trip characteristics differ across different times of day.
+
+---
+
+## 12. Hourly Revenue Potential
+
+**Prompt:** "Calculate potential hourly revenue by combining trip frequency and average fares"
+
+```python
+def get_hourly_revenue_potential(spark: SparkSession) -> DataFrame:
+  from pyspark.sql.functions import hour, count, avg, col, round as spark_round
+  
+  return (spark.read.table("samples.nyctaxi.trips")
+    .withColumn("hour", hour("tpep_pickup_datetime"))
+    .groupBy("hour")
+    .agg(
+      count("*").alias("trip_count"),
+      avg("fare_amount").alias("avg_fare"),
+      spark_round(count("*") * avg("fare_amount"), 2).alias("total_revenue_potential")
+    )
+    .withColumn("avg_fare", spark_round(col("avg_fare"), 2))
+    .orderBy(col("total_revenue_potential").desc())
+  )
+```
+
+**Insight:** Identifies the most profitable hours for drivers by combining trip volume with average fares - helps optimize driver schedules for maximum earnings.
 
 ---
 
