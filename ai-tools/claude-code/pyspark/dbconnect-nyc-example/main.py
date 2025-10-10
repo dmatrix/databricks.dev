@@ -1,5 +1,3 @@
-
-
 from pyspark.sql import SparkSession, DataFrame
 
 def get_spark() -> SparkSession:

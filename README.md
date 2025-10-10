@@ -23,7 +23,8 @@ databricks.dev/
 │   │       └── dbconnect-nyc-example/    # NYC Taxi example with Databricks Connect
 │   └── claude-code/
 │       └── pyspark/
-│           └── dbconnect-nyc-example/    # NYC Taxi example with Claude Code
+│           ├── dbconnect-nyc-example/    # NYC Taxi example with Claude Code
+│           └── dbconnect-million-songs/  # Million Songs DLT pipeline example
 ├── LICENSE
 └── README.md
 ```
@@ -58,7 +59,47 @@ The same NYC Taxi example optimized for Claude Code. Features:
 
 ---
 
-**What Both Examples Demonstrate:**
+### Million Songs Delta Live Tables Example
+
+**Location:** [ai-tools/claude-code/pyspark/dbconnect-million-songs/](ai-tools/claude-code/pyspark/dbconnect-million-songs/)
+
+A comprehensive example demonstrating Delta Live Tables (DLT) pipelines with Databricks Asset Bundles. Features:
+- **Delta Live Tables**: Declarative ETL pipeline for bronze layer data ingestion
+- **Databricks Asset Bundles**: Infrastructure-as-code deployment with `databricks.yml`
+- **Auto Loader**: Incremental CSV ingestion with schema inference
+- **Unity Catalog**: Governed data storage in catalog.schema.table format
+- **Local Development**: Query DLT-created tables using Databricks Connect
+- **Complete Testing**: pytest suite with data quality validation
+
+**What This Example Demonstrates:**
+- Deploy DLT pipelines using `databricks bundle deploy`
+- Ingest data from the Million Songs dataset into a bronze table
+- Use Auto Loader (cloudFiles) for incremental processing
+- Query Unity Catalog tables from your local environment
+- Test data quality and schema compliance
+
+[📖 Read the Million Songs README](ai-tools/claude-code/pyspark/dbconnect-million-songs/README.md)
+
+**Quick Start:**
+```bash
+cd ai-tools/claude-code/pyspark/dbconnect-million-songs
+
+# Deploy the DLT pipeline
+databricks bundle validate
+databricks bundle deploy
+databricks bundle run million_songs_bronze
+
+# Query the bronze table locally
+uv sync
+uv run src/main.py
+
+# Run tests
+uv run pytest tests/ -v
+```
+
+---
+
+**What the NYC Taxi Examples Demonstrate:**
 - Connect to Databricks using Databricks Connect
 - Use serverless compute for data processing
 - Query sample data (NYC taxi trips)
@@ -132,6 +173,7 @@ databricks auth login --profile DEFAULT --host https://your-workspace.databricks
 - **Vibe Coding Prompts**: See [ai-tools/claude-code/pyspark/dbconnect-nyc-example/docs/vibe_coding_nyc_taxi_prompts.md](ai-tools/claude-code/pyspark/dbconnect-nyc-example/docs/vibe_coding_nyc_taxi_prompts.md) for 12 interesting query patterns
   - 3 implemented and tested (Average Fare Per Mile, Busiest Pickup Locations, Peak Hours Analysis)
   - 9 ready for AI-assisted development
+- **DLT Pipeline Example**: See [ai-tools/claude-code/pyspark/dbconnect-million-songs/](ai-tools/claude-code/pyspark/dbconnect-million-songs/) for Delta Live Tables and Databricks Asset Bundles
 
 ### Official Documentation
 - **Databricks Connect Docs**: https://docs.databricks.com/dev-tools/databricks-connect.html
