@@ -10,17 +10,20 @@ A collection of AI-assisted development tools and examples for working with Data
 
 ## Overview
 
-This repository contains practical examples and tools for developing with Databricks using modern AI coding assistants like Cursor. The focus is on demonstrating best practices for local development with Databricks Connect and PySpark.
+This repository contains practical examples and tools for developing with Databricks using modern AI coding assistants like Cursor and Claude Code. The focus is on demonstrating best practices for local development with Databricks Connect and PySpark.
 
 ## Repository Structure
 
 ```
 databricks.dev/
 ├── ai-tools/
-│   └── cursor/
+│   ├── cursor/
+│   │   └── pyspark/
+│   │       ├── .cursor/                  # Cursor IDE rules
+│   │       └── dbconnect-nyc-example/    # NYC Taxi example with Databricks Connect
+│   └── claude-code/
 │       └── pyspark/
-│           ├── .cursor/                  # Cursor IDE rules
-│           └── dbconnect-nyc-example/    # NYC Taxi example with Databricks Connect
+│           └── dbconnect-nyc-example/    # NYC Taxi example with Claude Code
 ├── LICENSE
 └── README.md
 ```
@@ -29,33 +32,53 @@ databricks.dev/
 
 ### Databricks Connect NYC Taxi Example
 
-Located in `ai-tools/cursor/pyspark/dbconnect-nyc-example/`
+This repository includes two implementations of the same NYC Taxi example project, each tailored for different AI coding assistants:
 
-A minimal PySpark application demonstrating how to:
+#### 🎯 For Cursor Users
+**Location:** [ai-tools/cursor/pyspark/dbconnect-nyc-example/](ai-tools/cursor/pyspark/dbconnect-nyc-example/)
+
+A minimal PySpark application demonstrating Databricks Connect with Cursor IDE. Features:
+- Cursor IDE rules (`.cursor/rules/`) for Python development, project structure, and testing
+- 12 vibe coding prompts for generating NYC taxi analysis functions
+- 3 implemented functions with comprehensive tests
+- Complete documentation for AI-assisted development
+
+[📖 Read the Cursor example README](ai-tools/cursor/pyspark/dbconnect-nyc-example/README.md)
+
+#### 🤖 For Claude Code Users
+**Location:** [ai-tools/claude-code/pyspark/dbconnect-nyc-example/](ai-tools/claude-code/pyspark/dbconnect-nyc-example/)
+
+The same NYC Taxi example optimized for Claude Code. Features:
+- Claude Code configuration (`.claude/`) with project-specific rules
+- 12 vibe coding prompts ready for use with Claude Code
+- Same data analysis capabilities as the Cursor version
+- Streamlined for VS Code + Claude Code workflow
+
+[📖 Read the Claude Code example README](ai-tools/claude-code/pyspark/dbconnect-nyc-example/README.md)
+
+---
+
+**What Both Examples Demonstrate:**
 - Connect to Databricks using Databricks Connect
 - Use serverless compute for data processing
 - Query sample data (NYC taxi trips)
 - Work with DataFrames in PySpark
 - Perform aggregations and time-series analysis
 
-**Implemented Functions:**
-- `get_taxis()` - Raw NYC taxi trip data
-- `get_taxis_with_fare_per_mile()` - Fare per mile calculations
-- `get_busiest_pickup_locations()` - Top pickup locations by demand
-- `get_peak_hours()` - Hourly analysis with trip statistics
-
-**Key Features:**
+**Common Features:**
 - Uses `uv` for fast dependency management
 - Configured for the DEFAULT authentication profile
 - 12 query patterns available (3 implemented, 9 ready for development)
 - Follows strict project structure rules for AI-assisted development
-- Includes Cursor IDE rules (python-dev.mdc, project-structure-rules.mdc, testing-rules.mdc)
 - Clean, minimal setup for quick starts
-- Comprehensive test suite with pytest (8 tests, 100% passing)
+- Comprehensive test suite with pytest
 
-**Quick Start:**
+**Quick Start (either example):**
 ```bash
-cd ai-tools/cursor/pyspark/dbconnect-nyc-example
+# Choose your AI tool:
+cd ai-tools/cursor/pyspark/dbconnect-nyc-example     # For Cursor
+# OR
+cd ai-tools/claude-code/pyspark/dbconnect-nyc-example # For Claude Code
 
 # Authenticate with Databricks
 databricks auth login --profile DEFAULT --host https://your-workspace.databricks.com
@@ -98,11 +121,15 @@ databricks auth login --profile DEFAULT --host https://your-workspace.databricks
 ## Resources
 
 ### AI-Assisted Development
-- **Cursor with Databricks: AI Enhanced Development**: [Comprehensive guide by Dustin Vannoy](https://dustinvannoy.com/2025/09/29/cursor-with-databricks-ai-enhanced-development/) on leveraging Cursor IDE with Databricks Connect, including setup, Cursor rules, and MCP integration
-- **Cursor Rules**: Check out `ai-tools/cursor/pyspark/.cursor/rules/` for Python development and project structure rules
 
-### Query Examples & Documentation
-- **Vibe Coding Prompts**: See `ai-tools/cursor/pyspark/dbconnect-nyc-example/docs/vibe_coding_nyc_taxi_prompts.md` for 12 interesting query patterns
+#### For Cursor Users
+- **Cursor with Databricks: AI Enhanced Development**: [Comprehensive guide by Dustin Vannoy](https://dustinvannoy.com/2025/09/29/cursor-with-databricks-ai-enhanced-development/) on leveraging Cursor IDE with Databricks Connect, including setup, Cursor rules, and MCP integration
+- **Cursor Rules**: Check out [ai-tools/cursor/pyspark/.cursor/rules/](ai-tools/cursor/pyspark/.cursor/rules/) for Python development and project structure rules
+- **Vibe Coding Prompts**: See [ai-tools/cursor/pyspark/dbconnect-nyc-example/docs/vibe_coding_nyc_taxi_prompts.md](ai-tools/cursor/pyspark/dbconnect-nyc-example/docs/vibe_coding_nyc_taxi_prompts.md) for 12 interesting query patterns
+
+#### For Claude Code Users
+- **Claude Code Configuration**: Check out [ai-tools/claude-code/pyspark/dbconnect-nyc-example/.claude/](ai-tools/claude-code/pyspark/dbconnect-nyc-example/.claude/) for project-specific rules
+- **Vibe Coding Prompts**: See [ai-tools/claude-code/pyspark/dbconnect-nyc-example/docs/vibe_coding_nyc_taxi_prompts.md](ai-tools/claude-code/pyspark/dbconnect-nyc-example/docs/vibe_coding_nyc_taxi_prompts.md) for 12 interesting query patterns
   - 3 implemented and tested (Average Fare Per Mile, Busiest Pickup Locations, Peak Hours Analysis)
   - 9 ready for AI-assisted development
 
