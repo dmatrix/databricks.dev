@@ -1,0 +1,19 @@
+bundle:
+  name: million-songs-pipeline
+
+resources:
+  pipelines:
+    million_songs_bronze:
+      name: million-songs-bronze-pipeline
+      catalog: jules_catalog
+      schema: millionsongs
+      libraries:
+        - file:
+            path: ./pipelines/dlt_pipeline.py
+      clusters:
+        - label: default
+          num_workers: 1
+      channel: CURRENT
+      photon: true
+      continuous: false
+      development: true
