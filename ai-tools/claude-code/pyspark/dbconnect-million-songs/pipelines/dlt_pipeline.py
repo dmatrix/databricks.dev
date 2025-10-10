@@ -4,7 +4,7 @@ This pipeline creates a bronze table by ingesting data from the Million Songs da
 using Auto Loader (cloudFiles) for incremental processing.
 """
 
-import dlt
+import dlt # type: ignore
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import current_timestamp, lit
 
