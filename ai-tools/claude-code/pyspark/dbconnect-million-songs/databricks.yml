@@ -1,15 +1,15 @@
 bundle:
-  name: million-songs-pipeline
+  name: million-songs-spd-pipeline
 
 resources:
   pipelines:
-    million_songs_bronze:
-      name: million-songs-bronze-pipeline
+    million_songs_spd:
+      name: million-songs-spd-pipeline
       catalog: jules_catalog
       schema: millionsongs
       libraries:
         - file:
-            path: ./pipelines/dlt_pipeline.py
+            path: ./pipelines/spd_pipeline.py
       clusters:
         - label: default
           num_workers: 1

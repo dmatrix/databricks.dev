@@ -4,12 +4,15 @@ This pipeline creates a bronze table by ingesting data from the Million Songs da
 using Auto Loader (cloudFiles) for incremental processing.
 """
 
-import dlt
-from pyspark.sql import DataFrame
+from pyspark import pipelines as db
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import current_timestamp, lit
 
+# Get or create SparkSession for use in DLT pipeline
+spark = SparkSession.builder.getOrCreate()
 
-@dlt.table(
+
+@db.table(
     name="songs_raw_bronze",
     comment="Raw data from a subset of the Million Song Dataset; a collection of features and metadata for contemporary music tracks.",
     table_properties={
@@ -41,7 +44,7 @@ def songs_raw_bronze() -> DataFrame:
         spark.readStream
         .format("cloudFiles")
         .option("cloudFiles.format", "csv")
-        .option("header", "false")
+        .option("header", "true")
         .option("inferSchema", "false")
         .option("delimiter", "\t")
         .schema("""

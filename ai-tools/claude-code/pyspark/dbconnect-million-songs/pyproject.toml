@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "databricks-connect>=15.0.0",
+    "databricks-dlt >= 0.3.0",
     "pytest>=8.0.0",
 ]
 
