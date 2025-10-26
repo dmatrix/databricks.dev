@@ -1,8 +1,8 @@
-# Vibe Coding Prompts for DLT Medallion Pipeline
+# Vibe Coding Prompts for SPD Medallion Pipeline
 
-This document contains incremental prompts for building a Delta Live Tables (DLT) medallion architecture pipeline using the Million Songs dataset. The pipeline progresses through Bronze (raw), Silver (cleaned), and Gold (aggregated) layers.
+This document contains incremental prompts for building a Spark Declarative Pipelines (SPD) medallion architecture pipeline using the Million Songs dataset. The pipeline progresses through Bronze (raw), Silver (cleaned), and Gold (aggregated) layers.
 
-**Usage:** Follow the prompts in order to build a complete data pipeline that demonstrates DLT best practices with incremental processing, data quality checks, and expectations.
+**Usage:** Follow the prompts in order to build a complete data pipeline that demonstrates SPD best practices with incremental processing, data quality checks, and expectations.
 
 ---
 
@@ -11,7 +11,7 @@ This document contains incremental prompts for building a Delta Live Tables (DLT
 Before starting, ensure you have:
 - Access to a Databricks workspace
 - The Million Songs dataset available in AutoLoader in CloudFormat CSV at `/databricks-datasets/songs/data-001`
-- Basic understanding of Delta Live Tables and medallion architecture
+- Basic understanding of Spark Declarative Pipelines and medallion architecture
 
 ---
 
@@ -31,10 +31,10 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 1.1: Create Bronze Table
 
-**Prompt:** "Create a DLT bronze table called `songs_raw_bronze` that incrementally ingests data from `/databricks-datasets/songs/data-001`. Include metadata columns for ingestion timestamp and source system. Use streaming read for incremental processing."
+**Prompt:** "Create a SPD bronze table called `songs_raw_bronze` that incrementally ingests data from `/databricks-datasets/songs/data-001`. Include metadata columns for ingestion timestamp and source system. Use streaming read for incremental processing."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`, with arguments name=songs_raw_bronze, and commment=Raw data from a subset of the Million Song Dataset; a collection of features and metadata for contemprary music tracks. 
+- Function decorated with `@db.table`, with arguments name=songs_raw_bronze, and commment=Raw data from a subset of the Million Song Dataset; a collection of features and metadata for contemprary music tracks. 
 - Streaming source: `spark.readStream.format("cloudFiles")
 - the resulting table should be saved in the catalog path=jules_catalog.millionsongs
 - Add columns:
@@ -55,15 +55,15 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 2.1: Create Silver Table with Data Quality
 
-**Prompt:** "Create a DLT silver table called `silver_songs_cleaned` that reads from `bronze_songs` and applies data quality rules. Add expectations to validate: 1) duration is positive, 2) year is between 1900-2030, 3) artist_name is not null. Use quarantine pattern for invalid records. Add a `quality_check_timestamp` column."
+**Prompt:** "Create a SPD silver table called `silver_songs_cleaned` that reads from `bronze_songs` and applies data quality rules. Add expectations to validate: 1) duration is positive, 2) year is between 1900-2030, 3) artist_name is not null. Use quarantine pattern for invalid records. Add a `quality_check_timestamp` column."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
-- Read from: `dlt.read_stream("bronze_songs")`
+- Function decorated with `@db.table`
+- Read from: `db.read_stream("bronze_songs")`
 - Expectations with violation actions:
-  - `@dlt.expect_or_drop("valid_duration", "duration > 0")`
-  - `@dlt.expect_or_drop("valid_year", "year >= 1900 AND year <= 2030")`
-  - `@dlt.expect_or_drop("valid_artist", "artist_name IS NOT NULL")`
+  - `@db.expect_or_drop("valid_duration", "duration > 0")`
+  - `@db.expect_or_drop("valid_year", "year >= 1900 AND year <= 2030")`
+  - `@db.expect_or_drop("valid_artist", "artist_name IS NOT NULL")`
 - Add `quality_check_timestamp`: current timestamp
 - Filter out null or empty titles
 - Return: Cleaned streaming DataFrame
@@ -72,7 +72,7 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 **Key Concepts:**
 - Silver tables contain cleaned, validated data
-- DLT expectations enforce data quality
+- SPD expectations enforce data quality
 - `expect_or_drop` removes invalid records
 - Quarantine pattern isolates bad data
 
@@ -80,10 +80,10 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 2.2: Create Silver Quarantine Table
 
-**Prompt:** "Create a DLT table called `silver_songs_quarantine` that captures all records that failed silver layer validations. Include the original record plus columns for: failure reason, validation timestamp, and all failed validation rules."
+**Prompt:** "Create a SPD table called `silver_songs_quarantine` that captures all records that failed silver layer validations. Include the original record plus columns for: failure reason, validation timestamp, and all failed validation rules."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
+- Function decorated with `@db.table`
 - Read from: `bronze_songs`
 - Anti-join with `silver_songs_cleaned` to find failed records
 - Add columns:
@@ -103,11 +103,11 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 2.3: Enrich Silver Table with Derived Columns
 
-**Prompt:** "Create a DLT silver table called `silver_songs_enriched` that reads from `silver_songs_cleaned` and adds derived columns: 1) `duration_minutes` (duration converted to minutes, rounded to 2 decimals), 2) `decade` (derived from year), 3) `tempo_category` (Slow: <100, Medium: 100-140, Fast: >140), 4) `is_modern` (boolean: year >= 2000)."
+**Prompt:** "Create a SPD silver table called `silver_songs_enriched` that reads from `silver_songs_cleaned` and adds derived columns: 1) `duration_minutes` (duration converted to minutes, rounded to 2 decimals), 2) `decade` (derived from year), 3) `tempo_category` (Slow: <100, Medium: 100-140, Fast: >140), 4) `is_modern` (boolean: year >= 2000)."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
-- Read from: `dlt.read_stream("silver_songs_cleaned")`
+- Function decorated with `@db.table`
+- Read from: `db.read_stream("silver_songs_cleaned"`
 - Derived columns:
   - `duration_minutes`: `round(duration / 60, 2)`
   - `decade`: `floor(year / 10) * 10`
@@ -128,11 +128,11 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 3.1: Create Artist Summary Gold Table
 
-**Prompt:** "Create a DLT gold table called `gold_artist_summary` that aggregates songs by artist. Include metrics: total songs, average duration (minutes), earliest year, latest year, decades active, most common tempo category. Use complete mode for full refresh."
+**Prompt:** "Create a SPD gold table called `gold_artist_summary` that aggregates songs by artist. Include metrics: total songs, average duration (minutes), earliest year, latest year, decades active, most common tempo category. Use complete mode for full refresh."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
-- Read from: `dlt.read("silver_songs_enriched")` (batch read for aggregation)
+- Function decorated with `@db.table`
+- Read from: `db.read("silver_songs_enriched")` (batch read for aggregation)
 - Group by: `artist_id`, `artist_name`
 - Aggregations:
   - `total_songs`: count
@@ -155,11 +155,11 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 3.2: Create Decade Trends Gold Table
 
-**Prompt:** "Create a DLT gold table called `gold_decade_trends` that analyzes musical trends by decade. Include metrics: song count, average tempo, average duration, top 3 artists by song count, percentage of modern songs (year >= 2000)."
+**Prompt:** "Create a SPD gold table called `gold_decade_trends` that analyzes musical trends by decade. Include metrics: song count, average tempo, average duration, top 3 artists by song count, percentage of modern songs (year >= 2000)."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
-- Read from: `dlt.read("silver_songs_enriched")`
+- Function decorated with `@db.table`
+- Read from: `db.read("silver_songs_enriched")`
 - Group by: `decade`
 - Aggregations:
   - `song_count`: count
@@ -181,11 +181,11 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 3.3: Create Tempo Analysis Gold Table
 
-**Prompt:** "Create a DLT gold table called `gold_tempo_analysis` that analyzes songs by tempo category. Include metrics: song count, average year, average duration, most active decade, top 5 artists in each category."
+**Prompt:** "Create a SPD gold table called `gold_tempo_analysis` that analyzes songs by tempo category. Include metrics: song count, average year, average duration, most active decade, top 5 artists in each category."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
-- Read from: `dlt.read("silver_songs_enriched")`
+- Function decorated with `@db.table`
+- Read from: `db.read("silver_songs_enriched")`
 - Group by: `tempo_category`
 - Aggregations:
   - `song_count`: count
@@ -208,11 +208,11 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 3.4: Create Year-over-Year Growth Gold Table
 
-**Prompt:** "Create a DLT gold table called `gold_yoy_growth` that shows year-over-year growth in song releases. Calculate metrics: songs per year, YoY growth count, YoY growth percentage, cumulative total, 3-year moving average."
+**Prompt:** "Create a SPD gold table called `gold_yoy_growth` that shows year-over-year growth in song releases. Calculate metrics: songs per year, YoY growth count, YoY growth percentage, cumulative total, 3-year moving average."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
-- Read from: `dlt.read("silver_songs_enriched")`
+- Function decorated with `@db.table`
+- Read from: `db.read("silver_songs_enriched")`
 - Group by: `year`
 - Calculate:
   - `songs_released`: count
@@ -238,10 +238,10 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 4.1: Create Data Quality Metrics Gold Table
 
-**Prompt:** "Create a DLT gold table called `gold_data_quality_metrics` that tracks data quality metrics across the pipeline. Include: total records by layer (bronze/silver/gold), records dropped at silver, quarantine rate, average processing lag, data freshness timestamp."
+**Prompt:** "Create a SPD gold table called `gold_data_quality_metrics` that tracks data quality metrics across the pipeline. Include: total records by layer (bronze/silver/gold), records dropped at silver, quarantine rate, average processing lag, data freshness timestamp."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
+- Function decorated with `@db.table`
 - Read from multiple tables:
   - `bronze_songs`: count total ingested
   - `silver_songs_cleaned`: count total cleaned
@@ -269,11 +269,11 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 5.1: Create Artist Similarity Gold Table
 
-**Prompt:** "Create a DLT gold table called `gold_artist_similarity` that finds similar artists based on shared musical characteristics (decade, tempo category, average duration). For each artist, find top 5 most similar artists with similarity score."
+**Prompt:** "Create a SPD gold table called `gold_artist_similarity` that finds similar artists based on shared musical characteristics (decade, tempo category, average duration). For each artist, find top 5 most similar artists with similarity score."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
-- Read from: `dlt.read("gold_artist_summary")`
+- Function decorated with `@db.table`
+- Read from: `db.read("gold_artist_summary")`
 - Self-join on artists
 - Calculate similarity score based on:
   - Decade overlap (count of shared decades)
@@ -293,10 +293,10 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ### Prompt 5.2: Create Comprehensive Song Catalog Gold Table
 
-**Prompt:** "Create a DLT gold table called `gold_song_catalog` that creates a comprehensive, denormalized view combining song details with artist summaries and trend data. Include all song attributes plus artist rank, decade trend info, and quality flags."
+**Prompt:** "Create a SPD gold table called `gold_song_catalog` that creates a comprehensive, denormalized view combining song details with artist summaries and trend data. Include all song attributes plus artist rank, decade trend info, and quality flags."
 
 **Expected Implementation:**
-- Function decorated with `@dlt.table`
+- Function decorated with `@db.table`
 - Join multiple tables:
   - `silver_songs_enriched` (base)
   - `gold_artist_summary` (artist metrics)
@@ -318,10 +318,10 @@ Gold Layer (Aggregated & Analytics-Ready)
 
 ## How to Implement This Pipeline
 
-### Step 1: Set Up DLT Pipeline
+### Step 1: Set Up SPD Pipeline
 ```python
 # Create a new Python file: pipelines/million_songs_pipeline.py
-import dlt
+from pyspark import pipelines as db
 from pyspark.sql import functions as F
 from pyspark.sql import DataFrame
 ```
@@ -334,7 +334,7 @@ Follow the prompts sequentially:
 4. Add monitoring (Prompt 4.1)
 5. Enhance with advanced tables (Prompts 5.1-5.2)
 
-### Step 3: Create DLT Pipeline in Databricks
+### Step 3: Create SPD Pipeline in Databricks
 ```json
 {
   "name": "Million Songs Medallion Pipeline",
@@ -360,14 +360,14 @@ Follow the prompts sequentially:
 ```
 
 ### Step 4: Run and Monitor
-1. Start the DLT pipeline in Databricks
+1. Start the SPD pipeline in Databricks
 2. Monitor data quality metrics
 3. Validate expectations are being enforced
 4. Review quarantine table for rejected records
 
 ---
 
-## Best Practices for DLT Pipelines
+## Best Practices for SPD Pipelines
 
 ### Data Quality
 - **Use expectations liberally**: Validate critical fields at ingestion
@@ -381,11 +381,11 @@ Follow the prompts sequentially:
 
 ### Maintainability
 - **Comment expectations**: Explain why each expectation exists
-- **Version control**: Store DLT notebooks in git
+- **Version control**: Store SPD notebooks in git
 - **Use meaningful names**: Table names should describe content and layer clearly
 
 ### Testing
-- **Unit test transformations**: Test complex logic before deploying to DLT
+- **Unit test transformations**: Test complex logic before deploying to SPD
 - **Validate with sample data**: Run pipeline on small datasets first
 - **Monitor quarantine**: Set alerts for high quarantine rates
 
@@ -425,7 +425,7 @@ As your pipeline matures, consider:
 
 ## Additional Resources
 
-- [Delta Live Tables Documentation](https://docs.databricks.com/delta-live-tables/index.html)
+- [Spark Declarative Pipelines Documentation](https://docs.databricks.com/spark-declarative-pipelines/index.html)
 - [Medallion Architecture Guide](https://www.databricks.com/glossary/medallion-architecture)
-- [DLT Expectations Reference](https://docs.databricks.com/delta-live-tables/expectations.html)
-- [Streaming in DLT](https://docs.databricks.com/delta-live-tables/streaming.html)
+- [SPD Expectations Reference](https://docs.databricks.com/spark-declarative-pipelines/expectations.html)
+- [Streaming in SPD](https://docs.databricks.com/spark-declarative-pipelines/streaming.html)

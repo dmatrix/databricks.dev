@@ -1,9 +1,9 @@
 # Databricks Connect Million Songs Example
 
-A complete example demonstrating modern Databricks development practices using **Databricks Connect** for local development and **Delta Live Tables (DLT)** for data ingestion pipelines. This project uses the Million Songs dataset to showcase:
+A complete example demonstrating modern Databricks development practices using **Databricks Connect** for local development and **Spark Declarative Pipelines (SPD)** for data ingestion pipelines. This project uses the Million Songs dataset to showcase:
 
 - Local PySpark development with remote Databricks compute
-- Delta Live Tables pipeline deployment using Databricks Asset Bundles
+- Spark Declarative Pipelines deployment using Databricks Asset Bundles
 - Bronze layer data ingestion with Auto Loader
 - Comprehensive testing with pytest
 
@@ -11,7 +11,7 @@ A complete example demonstrating modern Databricks development practices using *
 
 This project demonstrates an end-to-end data pipeline workflow:
 
-1. **Bronze Layer**: DLT pipeline ingests raw CSV data from the Million Songs dataset into a Unity Catalog bronze table
+1. **Bronze Layer**: SPD pipeline ingests raw CSV data from the Million Songs dataset into a Unity Catalog bronze table
 2. **Local Development**: Query and analyze the bronze table using Databricks Connect from your local machine
 3. **Testing**: Validate data quality and schema using pytest
 
@@ -26,7 +26,7 @@ dbconnect-million-songs/
          data.py               # Data access functions
       main.py                   # Entry point script
    pipelines/
-      dlt_pipeline.py           # Delta Live Tables pipeline
+      spd_pipeline.py           # Spark Declarative Pipelines pipeline
    tests/
       __init__.py
       test_data.py              # Test suite
@@ -42,7 +42,7 @@ dbconnect-million-songs/
 ## Features
 
 - **Databricks Connect**: Local development with remote Databricks compute
-- **Delta Live Tables**: Declarative ETL pipeline for bronze layer ingestion
+- **Spark Declarative Pipelines**: Declarative ETL pipeline for bronze layer ingestion
 - **Databricks Asset Bundles**: Infrastructure-as-code for pipeline deployment
 - **Auto Loader**: Incremental ingestion of CSV files with schema inference
 - **Unity Catalog**: Governed data storage in catalog.schema.table format
@@ -71,9 +71,9 @@ databricks auth login --profile DEFAULT --host https://your-workspace.databricks
 uv sync
 ```
 
-### 3. Deploy the DLT Pipeline
+### 3. Deploy the SPD Pipeline
 
-The `databricks.yml` file defines a Databricks Asset Bundle that deploys the DLT pipeline:
+The `databricks.yml` file defines a Databricks Asset Bundle that deploys the SPD pipeline:
 
 ```bash
 # Validate the bundle configuration
@@ -83,7 +83,7 @@ databricks bundle validate
 databricks bundle deploy
 
 # Run the pipeline to create the bronze table
-databricks bundle run million_songs_bronze
+databricks bundle run million_songs_spd
 ```
 
 This will create the table `jules_catalog.millionsongs.songs_raw_bronze` (update catalog/schema names as needed).
@@ -118,40 +118,43 @@ uv run pytest tests/ -v
 
 ## Databricks Asset Bundle Configuration
 
-The `databricks.yml` file defines the infrastructure for deploying the DLT pipeline:
+The `databricks.yml` file defines the infrastructure for deploying the SPD pipeline:
 
 ```yaml
 bundle:
-  name: million-songs-pipeline
+  name: million-songs-spd-pipeline
 
 resources:
   pipelines:
-    million_songs_bronze:
-      name: million-songs-bronze-pipeline
-      catalog: jules_catalog          # Unity Catalog name
-      schema: millionsongs            # Schema name within the catalog
+    million_songs_spd:
+      name: million-songs-spd-pipeline
+      catalog: jules_catalog
+      schema: millionsongs
       libraries:
         - file:
-            path: ./pipelines/dlt_pipeline.py  # DLT pipeline code
+            path: ./pipelines/spd_pipeline.py
       clusters:
         - label: default
-          num_workers: 1               # Single worker for this small dataset
-      channel: CURRENT                 # Use current release channel
-      photon: true                     # Enable Photon for performance
-      continuous: false                # Run as triggered (not streaming)
-      development: true                # Development mode for easier debugging
+          num_workers: 1
+      channel: CURRENT
+      photon: true
+      continuous: false
+      development: true
 ```
 
 ### Key Configuration Elements
 
-- **bundle.name**: Unique identifier for the bundle
-- **resources.pipelines**: Defines DLT pipelines to deploy
-- **catalog/schema**: Unity Catalog location for tables (`catalog.schema.table`)
-- **libraries**: Path to the DLT pipeline Python file
-- **clusters**: Compute configuration (workers, instance types)
-- **photon**: Enables Databricks Photon engine for faster processing
-- **continuous**: `false` = triggered mode, `true` = streaming mode
-- **development**: `true` enables development mode with faster iteration
+- **bundle.name**: `million-songs-spd-pipeline` - Unique identifier for the entire bundle
+- **resources.pipelines.million_songs_spd**: Pipeline resource key used in `databricks bundle run million_songs_spd`
+- **name**: `million-songs-spd-pipeline` - Display name shown in Databricks workspace
+- **catalog**: `jules_catalog` - Unity Catalog name (customize for your environment)
+- **schema**: `millionsongs` - Schema name within the catalog (customize for your environment)
+- **libraries[].file.path**: `./pipelines/spd_pipeline.py` - Path to the SPD pipeline Python file
+- **clusters[].num_workers**: `1` - Number of worker nodes (single worker for this small dataset)
+- **channel**: `CURRENT` - Databricks runtime release channel
+- **photon**: `true` - Enable Databricks Photon engine for faster query performance
+- **continuous**: `false` - Run in triggered mode (not continuous streaming mode)
+- **development**: `true` - Enable development mode for faster iteration and debugging
 
 ### Customizing for Your Environment
 
@@ -164,12 +167,12 @@ Before deploying, update these values in `databricks.yml`:
    return spark.read.table("your_catalog.your_schema.songs_raw_bronze")
    ```
 
-## Delta Live Tables Pipeline
+## Spark Declarative Pipelines
 
-The DLT pipeline (`pipelines/dlt_pipeline.py`) defines the bronze table:
+The SPD pipeline (`pipelines/spd_pipeline.py`) defines the bronze table:
 
 ```python
-@dlt.table(
+@db.table(
     name="songs_raw_bronze",
     comment="Raw data from Million Song Dataset",
     table_properties={"quality": "bronze"}
@@ -241,7 +244,7 @@ The bronze table contains the following columns:
 This project follows strict structure rules defined in `../.claude/CLAUDE.md`:
 
 - **Source code** → `/src/dbconnect_million_songs/` (reusable modules) and `/src/` (entry points)
-- **Pipelines** → `/pipelines/` (DLT pipeline code)
+- **Pipelines** → `/pipelines/` (SPD pipeline code)
 - **Tests** → `/tests/` (mirrors src structure)
 - **Documentation** → `/docs/`
 - **Scripts** → `/scripts/` (setup/dev only)
@@ -303,7 +306,7 @@ return DatabricksSession.builder.profile("DEFAULT").clusterId("your-cluster-id")
 
 ### Pipeline Fails with "Table Not Found"
 
-Make sure the DLT pipeline has completed successfully:
+Make sure the SPD pipeline has completed successfully:
 ```bash
 databricks pipelines get <pipeline-id>
 ```
@@ -312,9 +315,9 @@ Check the pipeline status at the URL provided when you run `databricks bundle ru
 
 ### Import Errors
 
-The `dlt` module is only available in the Databricks runtime, not locally. The project structure separates:
-- `pipelines/dlt_pipeline.py` - Uses `dlt` decorator (runs on Databricks)
-- `src/dbconnect_million_songs/data.py` - No `dlt` import (runs locally)
+The `db` module (from `pyspark.pipelines`) is only available in the Databricks runtime, not locally. The project structure separates:
+- `pipelines/spd_pipeline.py` - Uses `@db` decorator (runs on Databricks)
+- `src/dbconnect_million_songs/data.py` - No `db` import (runs locally)
 
 ### Authentication Issues
 
@@ -326,7 +329,7 @@ databricks auth login --profile DEFAULT
 ## Resources
 
 - [Databricks Connect Docs](https://docs.databricks.com/dev-tools/databricks-connect.html)
-- [Delta Live Tables](https://docs.databricks.com/delta-live-tables/index.html)
+- [Spark Declarative Pipelines](https://docs.databricks.com/spark-declarative-pipelines/index.html)
 - [Databricks Asset Bundles](https://docs.databricks.com/dev-tools/bundles/index.html)
 - [Auto Loader](https://docs.databricks.com/ingestion/auto-loader/index.html)
 - [PySpark Documentation](https://spark.apache.org/docs/latest/api/python/)

@@ -1,7 +1,5 @@
 """Tests for data access functions."""
 
-import pytest
-
 from dbconnect_million_songs.config import get_spark
 from dbconnect_million_songs.data import get_songs
 

@@ -1,7 +1,6 @@
 """Data access functions for Million Songs dataset."""
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import current_timestamp, lit
 
  
 def get_songs(spark: SparkSession) -> DataFrame:
